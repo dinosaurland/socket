@@ -19,7 +19,11 @@ export * from "./types.ts";
  * Deno.serve({ port: 8000 }, (req) => {
  *     switch (new URL(req.url).pathname) {
  *         case "/ws": {
- *             return createSocket(req, backend);
+ *             return createSocket(req, {
+ *                 add(a: number, b: number) {
+ *                     return a + b;
+ *                 },
+ *             });
  *         }
  *         // ...
  *     }
