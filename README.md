@@ -6,7 +6,7 @@ Create schema of backend methods and expose them to the client via WebSocket. In
 
 [See full example here](https://github.com/dinosaurland/socket/tree/main/example)
 
-1. Create your backend methods. Use only JSON-serializable types for arguments and return values. Async functions are supported too.
+1. Create your backend methods. Use only [JSON-serializable](https://jsr.io/@dinosaur/socket/doc/client/~/Serializable) types for arguments and return values. Async functions are supported too.
 
 ```ts
 // backend.ts
