@@ -1,0 +1,14 @@
+{
+  "name": "@dinosaur/socket",
+  "description": "A simple WebSocket RPC library for Deno",
+  "version": "0.1.4",
+  "license": "MIT",
+  "keywords": ["deno", "socket", "websocket", "rpc"],
+  "exports": {
+    "./server": "./lib/server.ts",
+    "./client": "./lib/client.ts"
+  },
+  "tasks": {
+    "example": "deno run -A --watch=example example/server.ts"
+  }
+}
