@@ -4,9 +4,9 @@ Create schema of backend methods and expose them to the client via WebSocket. In
 
 ## Usage
 
-[See full example here](https://jsr.io/@dinosaur/socket/0.1.4/example)
+[See full example here](https://github.com/dinosaurland/socket/tree/main/example)
 
-Create your backend methods.
+1. Create your backend methods. Use only JSON-serializable types for arguments and return values. Async functions are supported too.
 
 ```ts
 // backend.ts
@@ -19,7 +19,7 @@ export default {
 }
 ```
 
-Create a server. On the `/ws` route, create a socket exposing the backend methods.
+2. Create a server. On the `/ws` route, create a socket exposing the backend methods.
 
 ```ts
 // server.ts
@@ -39,7 +39,7 @@ Deno.serve({ port: 8000 }, (req) => {
 });
 ```
 
-On the client, connect to the server and call the backend methods. Types are automatically inferred, and all functions are async.
+3. On the client, connect to the socket on the `/ws` route. When connected, the api object will be available. It will have the same structure as the backend object, but all methods will be async. Forward the type of backend to enjoy free type safety.
 
 ```ts
 // frontend.ts
