@@ -9,7 +9,7 @@
     "./client": "./lib/client.ts"
   },
   "tasks": {
-    "example": "deno run -A --watch=example example/server.ts"
+    "example": "deno run -A --watch=lib,example example/server.ts"
   },
   "publish": {
     "exclude": ["example"]

@@ -1,4 +1,7 @@
 export default {
+    greet(name: string) {
+        return `Hello, ${name}!`;
+    },
     math: {
         add(a: number, b: number) {
             return a + b;
@@ -7,7 +10,10 @@ export default {
             return a - b;
         },
     },
-    greet(name: string) {
-        return `Hello, ${name}!`;
-    },
+    async * countTo(n: number) {
+        for (let i = 1; i < n; i++) {
+            yield i;
+        }
+        return n;
+    }
 };

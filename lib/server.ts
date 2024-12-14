@@ -1,12 +1,24 @@
 /**
- * @module
  * Create a socket on your Deno server
+ * @module
  */
 
 // deno-lint-ignore-file no-explicit-any
-import type { BackendSchema, BackendMethod } from "./types.ts";
-import type { MessageBackendDescription, MessageMethodCall } from "./messages.ts";
-import { expectMessages, sendMessage, socketConnected } from "./utils.ts";
+import { Socket } from "./utils.ts";
+import type {
+    BackendDescription,
+    MessageBackendDescription,
+    MessageMethodCall,
+    MessageGeneratorNext,
+    MessageMethodResult,
+    MessageMethodError,
+    MessageGeneratorStarted,
+} from "./messages.ts";
+import type {
+    BackendSchema,
+    BackendMethod,
+    BackendGeneratorMethod,
+} from "./types.ts";
 
 export * from "./types.ts";
 
@@ -30,8 +42,8 @@ export * from "./types.ts";
  * }
  * ```
  */
-export function createSocket (
-    req: Request, 
+export function createSocket(
+    req: Request,
     structure: BackendSchema
 ): Response {
     if (req.headers.get("upgrade") !== "websocket") {
@@ -45,26 +57,31 @@ export function createSocket (
     return response;
 }
 
-async function buildBackend (
-    socket: WebSocket,
+function buildBackend(
+    webSocket: WebSocket,
     structure: BackendSchema
 ) {
-    await socketConnected(socket);
+    const socket = new Socket(webSocket);
     const module = buildBackendModule(socket, structure);
-    sendMessage<MessageBackendDescription>(socket, { type: 'description', module });
+    socket.send<MessageBackendDescription>({ type: 'description', module });
 }
 
-function buildBackendModule (
-    socket: WebSocket,
+function buildBackendModule(
+    socket: Socket,
     structure: BackendSchema,
     _prefix?: string
 ) {
-    const module = {} as any;
+    const module = {} as BackendDescription;
     for (const [key, value] of Object.entries(structure)) {
         const name = _prefix ? _prefix + "." + key : key;
         if (typeof value === "function") {
-            module[key] = true;
-            buildBackendFunction(socket, value, name);
+            if (value.constructor.name === "AsyncGeneratorFunction") {
+                module[key] = "generator";
+                buildGeneratorMethod(socket, value as BackendGeneratorMethod, name);
+            } else {
+                module[key] = "function";
+                buildMethod(socket, value as BackendMethod, name);
+            }
         } else {
             module[key] = buildBackendModule(socket, value, name);
         }
@@ -72,12 +89,12 @@ function buildBackendModule (
     return module;
 }
 
-async function buildBackendFunction (
-    socket: WebSocket, 
+async function buildMethod(
+    socket: Socket,
     func: BackendMethod,
-    method: string,
+    name: string,
 ) {
-    const messages = expectMessages<MessageMethodCall>(socket, { type: 'method call', method });
+    const messages = socket.expectMany<MessageMethodCall>({ type: 'method call', method: name });
     for await (const message of messages) {
         const { id, args } = message;
         try {
@@ -85,9 +102,41 @@ async function buildBackendFunction (
             if (result instanceof Promise) {
                 result = await result;
             }
-            sendMessage(socket, { type: 'method result', id, result });
+            socket.send({ type: 'method result', id, result });
         } catch (error: any) {
-            sendMessage(socket, { type: 'method result', id, error: error.message });
+            socket.send({ type: 'method result', id, error: error.message });
+        }
+    }
+}
+
+async function buildGeneratorMethod(
+    socket: Socket,
+    func: BackendGeneratorMethod,
+    name: string
+) {
+    const messages = socket.expectMany<MessageMethodCall>({ type: 'method call', method: name });
+    for await (const message of messages) {
+        const { id, args } = message;
+        runGeneratorMethod(socket, func, id, args);
+    }
+}
+
+async function runGeneratorMethod<T extends BackendGeneratorMethod>(
+    socket: Socket,
+    func: T,
+    id: number,
+    args: Parameters<T>
+) {
+    const generator = func(...args);
+    const messages = socket.expectMany<MessageGeneratorNext>({ type: 'method next', id });
+    socket.send<MessageGeneratorStarted>({ type: 'method start', id });
+    for await (const message of messages) {
+        try {
+            const { value, done = false } = await generator.next(message.args);
+            socket.send<MessageMethodResult>({ type: 'method result', id, result: value });
+            if (done) return;
+        } catch (error: any) {
+            socket.send<MessageMethodError>({ type: 'method result', id, error: error.message });
         }
     }
 }
