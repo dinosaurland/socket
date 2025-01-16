@@ -13,6 +13,7 @@ export default {
     async * countTo(n: number) {
         for (let i = 1; i < n; i++) {
             yield i;
+            await new Promise((resolve) => setTimeout(resolve, 1000));
         }
         return n;
     }

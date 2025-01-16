@@ -1,7 +1,7 @@
 {
   "name": "@dinosaur/socket",
   "description": "A simple WebSocket RPC library for Deno",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "license": "MIT",
   "keywords": ["deno", "socket", "websocket", "rpc"],
   "exports": {

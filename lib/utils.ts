@@ -7,8 +7,7 @@ export class Socket {
     private _messageQueue: Message[] = [];
     private _handle?: WebSocket;
     private _state = new State(false);
-
-    static reconnectInterval = 5000;
+    reconnectInterval = 5000;
     
     constructor(
         handle: WebSocket,
@@ -71,11 +70,27 @@ export class Socket {
     
     private async _maybeReconnect() {
         if (!this._reconnectToUrl) return;
-        await new Promise((resolve) => setTimeout(resolve, Socket.reconnectInterval));
+        await new Promise((resolve) => setTimeout(resolve, this.reconnectInterval));
+        console.log(`Reconnecting to ${this._reconnectToUrl}`);
         this._init(new WebSocket(this._reconnectToUrl));
     }
 
-    get stateStream() {
+    get connected() {
+        return this._state.value;
+    }
+    get connection() {
+        const { promise, resolve, reject } = Promise.withResolvers<void>();
+        if (this.connected) {
+            resolve();
+        } else {
+            const listener = this._state.watch();
+            listener.next().then(({ value }) => {
+                
+            });
+        }
+        return promise
+    }
+    watchState() {
         return this._state.watch();
     }
 
