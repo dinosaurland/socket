@@ -1,5 +1,5 @@
 import type { Message, MessageFilter, MessageListener } from "./messages.ts";
-import State from "jsr:@dinosaur/state";
+import { State } from "@dinosaur/state";
 
 export class Socket {
 
