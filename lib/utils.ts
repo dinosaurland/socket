@@ -78,18 +78,6 @@ export class Socket {
     get connected() {
         return this._state.value;
     }
-    get connection() {
-        const { promise, resolve, reject } = Promise.withResolvers<void>();
-        if (this.connected) {
-            resolve();
-        } else {
-            const listener = this._state.watch();
-            listener.next().then(({ value }) => {
-                
-            });
-        }
-        return promise
-    }
     watchState() {
         return this._state.watch();
     }
